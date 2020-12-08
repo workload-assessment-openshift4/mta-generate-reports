@@ -1,0 +1,30 @@
+= Batch run Migration Toolkit for Applications (MTA)
+
+The `mta-generate-report.sh` is a simple script to run https://developers.redhat.com/products/mta/[MTA] CLI for multiple artifacts.
+
+Usage:
+```
+./mta-generate-rerports.sh [MTA_ARTIFACT_LIST_FILE] [MTA_REPORTS_OUTPUT_DIR]
+    The MTA_ARTIFACT_LIST_FILE input file is expected to contain the list of artifacts to scan, one per each line. 
+    The MTA_REPORTS_OUTPUT_DIR output directory is where the reports will be created.
+```
+
+Environment variables:
+
+* MTA_HOME (required): Points where MTA CLI can be found. E.g.: `/home/myuser/mta-cli-5.1.0.Final`
+* MTA_ARTIFACT_LIST_FILE: Input artifact list file. Used only if parameters are not set on command line.
+* MTA_REPORTS_OUTPUT_DIR: Output directory where report directories and logs will be created. Used only if parameters are not set on command line.
+* MTA_ARTIFACT_DONE_FILE: File with the list of already processed artifacts. It's useful if processing is stopped in the middle, so we can restart without regenerating the existing reports. Defaults to `$MTA_ARTIFACT_LIST_FILE.done`.
+
+Example:
+```sh
+export MTA_HOME=/home/myuser/mta-cli-5.1.0.Final
+
+cat <<EOF >artifacts.txt
+/Users/bszeti/myapp.war
+/tmp/basic-servlet-example/ServletSample/target/ServletSample.war
+/opt/projects/jee-example-app-1.0.0.ear
+EOF
+
+./mta-generate-rerports.sh artifacts.txt /tmp/mta-reports
+``` 
