@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Avoid tee overwriting error code 
+# Avoid tee -a overwriting error code 
 set -o pipefail
 
 MTA_ARTIFACT_LIST_FILE="${1:-$MTA_ARTIFACT_LIST_FILE}"
@@ -33,10 +33,10 @@ cat "$MTA_ARTIFACT_LIST_FILE" | while read -r ARTIFACT_INFO
 do
     # Download url
     ARTIFACT=$( echo $ARTIFACT_INFO | awk -F, '{ gsub(/ /, "", $5); print $5; }')
-    echo "Artifact: '$ARTIFACT'" | tee "$MTA_RUN_LOG_FILE"
+    echo "Artifact: '$ARTIFACT'" | tee -a "$MTA_RUN_LOG_FILE"
 
     # Skip if artifact is already in the .done file
-    grep -x "$ARTIFACT" "$MTA_ARTIFACT_DONE_FILE" >/dev/null && (echo "Skip $ARTIFACT" | tee "$MTA_RUN_LOG_FILE") && continue
+    grep -x "$ARTIFACT" "$MTA_ARTIFACT_DONE_FILE" >/dev/null && (echo "Skip $ARTIFACT" | tee -a "$MTA_RUN_LOG_FILE") && continue
     
     # Trim first /; convert / to _; convert space to _
     ARTIFACT_UNDERSCORE="$ARTIFACT"
@@ -55,23 +55,23 @@ do
     mkdir -p "$ARTIFACT_WORK_DIR" || { echo "Failed to create workdir ARTIFACT_WORK_DIR=$ARTIFACT_WORK_DIR"; exit 1; }
 
     # Download artifact
-    curl -sf -u "$NEXUS_USERNAME:$NEXUS_PASSWORD" -O "$ARTIFACT_DOWNLOAD_FILE" $ARTIFACT
+    curl -ksf -u "$NEXUS_USERNAME:$NEXUS_PASSWORD" -O "$ARTIFACT_DOWNLOAD_FILE" $ARTIFACT
     if [ $? != 0 ]; then
-        echo "Error downloading $ARTIFACT." | tee "$MTA_RUN_LOG_FILE"
+        echo "Error downloading $ARTIFACT" | tee -a "$MTA_RUN_LOG_FILE"
         continue
     fi
 
     # Run MTA
-    echo "$MTA_HOME/bin/mta-cli" --batchMode --exportCSV --overwrite -input "$ARTIFACT_DOWNLOAD_FILE" --output "$ARTIFACT_REPORT_DIR" --target cloud-readiness | tee "$MTA_RUN_LOG_FILE"
-    "$MTA_HOME/bin/mta-cli" --batchMode --exportCSV --overwrite -input "$ARTIFACT_DOWNLOAD_FILE" --output "$ARTIFACT_REPORT_DIR" --target cloud-readiness 2>&1 | tee "$ARTIFACT_LOG_FILE"
+    echo "$MTA_HOME/bin/mta-cli" --batchMode --exportCSV --overwrite -input "$ARTIFACT_DOWNLOAD_FILE" --output "$ARTIFACT_REPORT_DIR" --target cloud-readiness | tee -a "$MTA_RUN_LOG_FILE"
+    "$MTA_HOME/bin/mta-cli" --batchMode --exportCSV --overwrite -input "$ARTIFACT_DOWNLOAD_FILE" --output "$ARTIFACT_REPORT_DIR" --target cloud-readiness 2>&1 | tee -a "$ARTIFACT_LOG_FILE"
     if [ $? != 0 -o ! -z "$(grep 'ERROR:' $ARTIFACT_REPORT_DIR.log)" ]; then
-        echo "Error for $ARTIFACT." | tee "$MTA_RUN_LOG_FILE"
+        echo "Error for $ARTIFACT." | tee -a "$MTA_RUN_LOG_FILE"
         continue
     fi
 
     # Mark as done
     echo "$ARTIFACT" >>"$MTA_ARTIFACT_DONE_FILE"
-    echo "Done $ARTIFACT" | tee "$MTA_RUN_LOG_FILE"
+    echo "Done $ARTIFACT" | tee -a "$MTA_RUN_LOG_FILE"
 done
 
 
