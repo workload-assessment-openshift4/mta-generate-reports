@@ -26,7 +26,7 @@ fi
 
 mkdir -p "$MTA_REPORTS_OUTPUT_DIR" || { echo "Failed to create MTA_REPORTS_OUTPUT_DIR=$MTA_REPORTS_OUTPUT_DIR"; exit 1; }
 touch "$MTA_ARTIFACT_DONE_FILE" || { echo "Can't write file MTA_ARTIFACT_DONE_FILE=$MTA_ARTIFACT_DONE_FILE"; exit 1; }
-
+rm $MTA_RUN_LOG_FILE
 
 # Loop over artifact list
 cat "$MTA_ARTIFACT_LIST_FILE" | while read -r ARTIFACT_INFO
@@ -55,7 +55,7 @@ do
     mkdir -p "$ARTIFACT_WORK_DIR" || { echo "Failed to create workdir ARTIFACT_WORK_DIR=$ARTIFACT_WORK_DIR"; exit 1; }
 
     # Download artifact
-    curl -ksf -u "$NEXUS_USERNAME:$NEXUS_PASSWORD" -O "$ARTIFACT_DOWNLOAD_FILE" $ARTIFACT
+    (cd $ARTIFACT_WORK_DIR && curl -ksSf -u "$NEXUS_USERNAME:$NEXUS_PASSWORD" -O $ARTIFACT)
     if [ $? != 0 ]; then
         echo "Error downloading $ARTIFACT" | tee -a "$MTA_RUN_LOG_FILE"
         continue
