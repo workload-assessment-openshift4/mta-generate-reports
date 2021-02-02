@@ -4,9 +4,9 @@
 set -o pipefail
 
 MTA_ARTIFACT_LIST_FILE="${1:-$MTA_ARTIFACT_LIST_FILE}"
-MTA_ARTIFACT_DONE_FILE="${MTA_ARTIFACT_DONE_FILE:-$MTA_ARTIFACT_LIST_FILE.done}"
-MTA_RUN_LOG_FILE="${MTA_RUN_LOG_FILE:-$MTA_ARTIFACT_LIST_FILE.log}"
 MTA_REPORTS_OUTPUT_DIR="${2:-$MTA_REPORTS_OUTPUT_DIR}"
+MTA_ARTIFACT_DONE_FILE="${MTA_ARTIFACT_DONE_FILE:-$MTA_REPORTS_OUTPUT_DIR/artifacts.done}"
+MTA_RUN_LOG_FILE="${MTA_RUN_LOG_FILE:-$MTA_REPORTS_OUTPUT_DIR/report.log}"
 
 NEXUS_USERNAME="${NEXUS_USERNAME:-$myusername}"
 NEXUS_PASSWORD="${NEXUS_PASSWORD:-$mypassword}"
@@ -24,16 +24,16 @@ if [ -z "$MTA_ARTIFACT_LIST_FILE" -o -z "$MTA_REPORTS_OUTPUT_DIR" ]; then
     exit 1 
 fi
 
-touch "$MTA_ARTIFACT_DONE_FILE" || { echo "Can't write file MTA_ARTIFACT_DONE_FILE=$MTA_ARTIFACT_DONE_FILE"; exit 1; }
 mkdir -p "$MTA_REPORTS_OUTPUT_DIR" || { echo "Failed to create MTA_REPORTS_OUTPUT_DIR=$MTA_REPORTS_OUTPUT_DIR"; exit 1; }
+touch "$MTA_ARTIFACT_DONE_FILE" || { echo "Can't write file MTA_ARTIFACT_DONE_FILE=$MTA_ARTIFACT_DONE_FILE"; exit 1; }
 
 
 # Loop over artifact list
 cat "$MTA_ARTIFACT_LIST_FILE" | while read -r ARTIFACT_INFO
 do
     # Download url
-    ARTIFACT=$(awk '{gsub(/ /,""); print $5 ","}')
-    echo "Artifact: $ARTIFACT" | tee "$MTA_RUN_LOG_FILE"
+    ARTIFACT=$( echo $ARTIFACT_INFO | awk -F, '{ gsub(/ /, "", $5); print $5; }')
+    echo "Artifact: '$ARTIFACT'" | tee "$MTA_RUN_LOG_FILE"
 
     # Skip if artifact is already in the .done file
     grep -x "$ARTIFACT" "$MTA_ARTIFACT_DONE_FILE" >/dev/null && (echo "Skip $ARTIFACT" | tee "$MTA_RUN_LOG_FILE") && continue
@@ -41,20 +41,21 @@ do
     # Trim first /; convert / to _; convert space to _
     ARTIFACT_UNDERSCORE="$ARTIFACT"
     ARTIFACT_UNDERSCORE="${ARTIFACT_UNDERSCORE#/}"
+    ARTIFACT_UNDERSCORE=${ARTIFACT_UNDERSCORE#'https://'}
     ARTIFACT_UNDERSCORE="${ARTIFACT_UNDERSCORE////_}"
     ARTIFACT_UNDERSCORE="${ARTIFACT_UNDERSCORE// /_}"
     echo "Generate report for $ARTIFACT -> $ARTIFACT_UNDERSCORE"
     
     ARTIFACT_BASE_DIR="$MTA_REPORTS_OUTPUT_DIR/$ARTIFACT_UNDERSCORE"
     ARTIFACT_REPORT_DIR="$ARTIFACT_BASE_DIR/report"
-    ARTIFACT_WORK_DIR="$ARTIFACT_BASE_DIR/workspace"
+    ARTIFACT_WORK_DIR="$ARTIFACT_BASE_DIR/workdir"
     ARTIFACT_LOG_FILE="$ARTIFACT_WORK_DIR/mta-cli.log"
     ARTIFACT_DOWNLOAD_FILE="$ARTIFACT_WORK_DIR/$(basename $ARTIFACT)"
     rm -rf "$ARTIFACT_BASE_DIR"
-    mkdir -p "$ARTIFACT_WORK_DIR"
+    mkdir -p "$ARTIFACT_WORK_DIR" || { echo "Failed to create workdir ARTIFACT_WORK_DIR=$ARTIFACT_WORK_DIR"; exit 1; }
 
     # Download artifact
-    curl -sf -O "$ARTIFACT_DOWNLOAD_FILE" $ARTIFACT
+    curl -sf -u "$NEXUS_USERNAME:$NEXUS_PASSWORD" -O "$ARTIFACT_DOWNLOAD_FILE" $ARTIFACT
     if [ $? != 0 ]; then
         echo "Error downloading $ARTIFACT." | tee "$MTA_RUN_LOG_FILE"
         continue
