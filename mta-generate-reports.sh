@@ -64,7 +64,7 @@ do
     # Run MTA
     echo "$MTA_HOME/bin/mta-cli" --batchMode --exportCSV --overwrite -input "$ARTIFACT_DOWNLOAD_FILE" --output "$ARTIFACT_REPORT_DIR" --target cloud-readiness | tee -a "$MTA_RUN_LOG_FILE"
     "$MTA_HOME/bin/mta-cli" --batchMode --exportCSV --overwrite -input "$ARTIFACT_DOWNLOAD_FILE" --output "$ARTIFACT_REPORT_DIR" --target cloud-readiness 2>&1 | tee -a "$ARTIFACT_LOG_FILE"
-    if [ $? != 0 -o ! -z "$(grep 'ERROR:' $ARTIFACT_REPORT_DIR.log)" ]; then
+    if [ $? != 0 -o ! -z "$(grep 'ERROR:' $ARTIFACT_LOG_FILE)" ]; then
         echo "Error for $ARTIFACT." | tee -a "$MTA_RUN_LOG_FILE"
         continue
     fi
