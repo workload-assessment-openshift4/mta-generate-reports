@@ -7,6 +7,7 @@ MTA_ARTIFACT_LIST_FILE="${1:-$MTA_ARTIFACT_LIST_FILE}"
 MTA_REPORTS_OUTPUT_DIR="${2:-$MTA_REPORTS_OUTPUT_DIR}"
 MTA_ARTIFACT_DONE_FILE="${MTA_ARTIFACT_DONE_FILE:-$MTA_REPORTS_OUTPUT_DIR/artifacts.done}"
 MTA_RUN_LOG_FILE="${MTA_RUN_LOG_FILE:-$MTA_REPORTS_OUTPUT_DIR/report.log}"
+MTA_POINTS_FILE="${MTA_POINTS_FILE:-$MTA_REPORTS_OUTPUT_DIR/points.csv}"
 
 NEXUS_USERNAME="${NEXUS_USERNAME:-$myusername}"
 NEXUS_PASSWORD="${NEXUS_PASSWORD:-$mypassword}"
@@ -26,6 +27,9 @@ fi
 
 mkdir -p "$MTA_REPORTS_OUTPUT_DIR" || { echo "Failed to create MTA_REPORTS_OUTPUT_DIR=$MTA_REPORTS_OUTPUT_DIR"; exit 1; }
 touch "$MTA_ARTIFACT_DONE_FILE" || { echo "Can't write file MTA_ARTIFACT_DONE_FILE=$MTA_ARTIFACT_DONE_FILE"; exit 1; }
+if [ ! -f "$MTA_POINTS_FILE" ]
+    echo "URL,Repository,GroupId,ArtifactId,Version,Description,Points,Total,Migration Optional,Cloud Mandatory,Cloud Optional,Information" >"$MTA_POINTS_FILE"
+fi
 # rm $MTA_RUN_LOG_FILE
 
 # Loop over artifact list
@@ -68,6 +72,16 @@ do
         echo "Error for $ARTIFACT." | tee -a "$MTA_RUN_LOG_FILE"
         continue
     fi
+
+    #Parse points from index.html
+    POINTS=$(cat $ARTIFACT_REPORT_DIR/index.html | grep '<span class="points">' | sed 's/[^0-9]*//g')
+    NUM_TOTAL=$(cat $ARTIFACT_REPORT_DIR/index.html | grep '<td class="label_"> <span>Total</span> </td>' -B1 | sed 's/[^0-9]*//g')
+    NUM_OPTIONAL=$(cat $ARTIFACT_REPORT_DIR/index.html | grep '<td class="label_">Migration Optional</td>' -B1 | sed 's/[^0-9]*//g')
+    NUM_CLOUD_MANDATORY=$(cat $ARTIFACT_REPORT_DIR/index.html | grep '<td class="label_">Cloud Mandatory</td>' -B1 | sed 's/[^0-9]*//g')
+    NUM_CLOUD_OPTIONAL=$(cat $ARTIFACT_REPORT_DIR/index.html | grep '<td class="label_">Cloud Optional</td>' -B1 | sed 's/[^0-9]*//g')
+    NUM_INFORMATION=$(cat $ARTIFACT_REPORT_DIR/index.html | grep '<td class="label_">Information</td>' -B1 | sed 's/[^0-9]*//g')
+
+    echo "$ARTIFACT_INFO,$POINTS,$NUM_TOTAL,$NUM_OPTIONAL,$NUM_CLOUD_MANDATORY,$NUM_CLOUD_OPTIONAL,$NUM_INFORMATION" | tee -a "$MTA_POINTS_FILE"
 
     # Mark as done
     echo "$ARTIFACT" >>"$MTA_ARTIFACT_DONE_FILE"
