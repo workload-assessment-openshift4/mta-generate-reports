@@ -26,13 +26,13 @@ fi
 
 mkdir -p "$MTA_REPORTS_OUTPUT_DIR" || { echo "Failed to create MTA_REPORTS_OUTPUT_DIR=$MTA_REPORTS_OUTPUT_DIR"; exit 1; }
 touch "$MTA_ARTIFACT_DONE_FILE" || { echo "Can't write file MTA_ARTIFACT_DONE_FILE=$MTA_ARTIFACT_DONE_FILE"; exit 1; }
-rm $MTA_RUN_LOG_FILE
+# rm $MTA_RUN_LOG_FILE
 
 # Loop over artifact list
 cat "$MTA_ARTIFACT_LIST_FILE" | while read -r ARTIFACT_INFO
 do
     # Download url
-    ARTIFACT=$( echo $ARTIFACT_INFO | awk -F, '{ gsub(/ /, "", $5); print $5; }')
+    ARTIFACT=$( echo $ARTIFACT_INFO | awk -F, '{ gsub(/ /, "", $1); print $1; }')
     echo "Artifact: '$ARTIFACT'" | tee -a "$MTA_RUN_LOG_FILE"
 
     # Skip if artifact is already in the .done file
