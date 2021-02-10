@@ -27,8 +27,8 @@ fi
 
 mkdir -p "$MTA_REPORTS_OUTPUT_DIR" || { echo "Failed to create MTA_REPORTS_OUTPUT_DIR=$MTA_REPORTS_OUTPUT_DIR"; exit 1; }
 touch "$MTA_ARTIFACT_DONE_FILE" || { echo "Can't write file MTA_ARTIFACT_DONE_FILE=$MTA_ARTIFACT_DONE_FILE"; exit 1; }
-if [ ! -f "$MTA_POINTS_FILE" ]
-    echo "URL,Repository,GroupId,ArtifactId,Version,Description,Points,Total,Migration Optional,Cloud Mandatory,Cloud Optional,Information" >"$MTA_POINTS_FILE"
+if [ ! -f "$MTA_POINTS_FILE" ]; then
+    echo "URL,Repository,GroupId,ArtifactId,Version,FullName,Description,Points,Total,Migration Optional,Cloud Mandatory,Cloud Optional,Information" >"$MTA_POINTS_FILE"
 fi
 # rm $MTA_RUN_LOG_FILE
 
