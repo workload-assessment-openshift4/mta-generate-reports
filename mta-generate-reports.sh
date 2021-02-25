@@ -69,7 +69,7 @@ do
     if [[ "$ARTIFACT" == *jar ]]
     then
         echo JAR
-        unzip $ARTIFACT_WORK_DIR/*.jar -p META-INF/MANIFEST.MF | grep 'Main-Class'
+        unzip -p $ARTIFACT_WORK_DIR/*.jar META-INF/MANIFEST.MF | grep 'Main-Class'
         if [ $? != 0 ]; then
             echo "Non-executable JAR file: $ARTIFACT" | tee -a "$MTA_RUN_LOG_FILE"
             rm -rf "$ARTIFACT_BASE_DIR"
