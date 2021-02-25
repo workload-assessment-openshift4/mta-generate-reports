@@ -65,6 +65,18 @@ do
         continue
     fi
 
+    # Is it an executable JAR file?
+    if [[ "$ARTIFACT" == *jar ]]
+    then
+        echo JAR
+        unzip $ARTIFACT_WORK_DIR/*.jar -p META-INF/MANIFEST.MF | grep 'Main-Class'
+        if [ $? != 0 ]; then
+            echo "Non-executable JAR file: $ARTIFACT" | tee -a "$MTA_RUN_LOG_FILE"
+            rm -rf "$ARTIFACT_BASE_DIR"
+            continue
+        fi
+    fi
+
     # Run MTA
     echo "$MTA_HOME/bin/mta-cli" --batchMode --exportCSV --overwrite -input "$ARTIFACT_DOWNLOAD_FILE" --output "$ARTIFACT_REPORT_DIR" --target cloud-readiness | tee -a "$MTA_RUN_LOG_FILE"
     "$MTA_HOME/bin/mta-cli" --batchMode --exportCSV --overwrite -input "$ARTIFACT_DOWNLOAD_FILE" --output "$ARTIFACT_REPORT_DIR" --target cloud-readiness 2>&1 | tee -a "$ARTIFACT_LOG_FILE"
