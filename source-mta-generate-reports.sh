@@ -29,7 +29,7 @@ if [ ! -f "$MTA_POINTS_FILE" ]; then
 fi
 
 # Loop over repo list
-cat "$MTA_REPO_LIST_FILE" | while IFS="," read -r REPO BRANCH SUBDIR
+cat "$MTA_REPO_LIST_FILE" | while IFS="," read -r COL1 COL2 COL3 COL4 REPO BRANCH SUBDIR
 do
     # Download url
     echo "Repo: '$REPO'" | tee -a "$MTA_RUN_LOG_FILE"
