@@ -38,14 +38,15 @@ do
     grep -x "$REPO" "$MTA_REPO_DONE_FILE" >/dev/null && (echo "Skip $REPO" | tee -a "$MTA_RUN_LOG_FILE") && continue
 
     # Trim
-    REPO_NAME=$(basename "$REPO")
+    REPO_NAME_RAW=$(basename "$REPO")
+    REPO_NAME=$(echo "$REPO_NAME_RAW" | cut -f 1 -d '.')
     echo "Generate report for $REPO -> $REPO_NAME"
 
-    REPO_BASE_DIR="$MTA_REPORTS_OUTPUT_DIR/$REPO_NAME"
+    REPO_BASE_DIR="$MTA_REPORTS_OUTPUT_DIR/$REPO_NAME" 
     REPO_REPORT_DIR="$REPO_BASE_DIR/report"
     REPO_WORK_DIR="$REPO_BASE_DIR/workdir"
     REPO_LOG_FILE="$REPO_WORK_DIR/mta-cli.log"
-    REPO_CLONED_DIR="$REPO_WORK_DIR/$(basename $REPO)"
+    REPO_CLONED_DIR="$REPO_WORK_DIR/$REPO_NAME"
     rm -rf "$REPO_BASE_DIR"
     mkdir -p "$REPO_WORK_DIR" || { echo "Failed to create workdir REPO_WORK_DIR=$REPO_WORK_DIR"; exit 1; }
 
