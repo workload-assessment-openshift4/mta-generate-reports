@@ -76,12 +76,12 @@ do
     fi
 
     #Parse points from index.html
-    POINTS=$(cat $REPO_REPORT_DIR/index.html | grep '<span class="points">' | sed 's/[^0-9]*//g')
-    NUM_TOTAL=$(cat $REPO_REPORT_DIR/index.html | grep '<td class="label_"> <span>Total</span> </td>' -B1 | sed 's/[^0-9]*//g')
-    NUM_OPTIONAL=$(cat $REPO_REPORT_DIR/index.html | grep '<td class="label_">Migration Optional</td>' -B1 | sed 's/[^0-9]*//g')
-    NUM_CLOUD_MANDATORY=$(cat $REPO_REPORT_DIR/index.html | grep '<td class="label_">Cloud Mandatory</td>' -B1 | sed 's/[^0-9]*//g')
-    NUM_CLOUD_OPTIONAL=$(cat $REPO_REPORT_DIR/index.html | grep '<td class="label_">Cloud Optional</td>' -B1 | sed 's/[^0-9]*//g')
-    NUM_INFORMATION=$(cat $REPO_REPORT_DIR/index.html | grep '<td class="label_">Information</td>' -B1 | sed 's/[^0-9]*//g')
+    POINTS=$(cat $REPO_REPORT_DIR/index.html | grep '<span class="legend">story points</span>' -B1 -m1 | sed 's/[^0-9]*//g')
+    NUM_TOTAL=$(cat $REPO_REPORT_DIR/index.html | grep '<td class="label_"> <span>Total</span> </td>' -B1 -m1| sed 's/[^0-9]*//g')
+    NUM_OPTIONAL=$(cat $REPO_REPORT_DIR/index.html | grep '<td class="label_">Migration Optional</td>' -B1 -m1| sed 's/[^0-9]*//g')
+    NUM_CLOUD_MANDATORY=$(cat $REPO_REPORT_DIR/index.html | grep '<td class="label_">Cloud Mandatory</td>' -B1 -m1| sed 's/[^0-9]*//g')
+    NUM_CLOUD_OPTIONAL=$(cat $REPO_REPORT_DIR/index.html | grep '<td class="label_">Cloud Optional</td>' -B1 -m1| sed 's/[^0-9]*//g')
+    NUM_INFORMATION=$(cat $REPO_REPORT_DIR/index.html | grep '<td class="label_">Information</td>' -B1 -m1| sed 's/[^0-9]*//g')
 
     echo "$REPO,$REPO_NAME,$POINTS,$NUM_TOTAL,$NUM_OPTIONAL,$NUM_CLOUD_MANDATORY,$NUM_CLOUD_OPTIONAL,$NUM_INFORMATION" | tee -a "$MTA_POINTS_FILE"
 
