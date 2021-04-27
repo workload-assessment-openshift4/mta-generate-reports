@@ -25,24 +25,30 @@ fi
 mkdir -p "$MTA_REPORTS_OUTPUT_DIR" || { echo "Failed to create MTA_REPORTS_OUTPUT_DIR=$MTA_REPORTS_OUTPUT_DIR"; exit 1; }
 touch "$MTA_REPO_DONE_FILE" || { echo "Can't write file MTA_REPO_DONE_FILE=$MTA_REPO_DONE_FILE"; exit 1; }
 if [ ! -f "$MTA_POINTS_FILE" ]; then
-    echo "URL,Repository,Points,Total,Migration Optional,Cloud Mandatory,Cloud Optional,Information" >"$MTA_POINTS_FILE"
+    echo "URL,Repository,SubDirectory,Points,Total,Migration Optional,Cloud Mandatory,Cloud Optional,Information" >"$MTA_POINTS_FILE"
 fi
 
 # Loop over repo list
 cat "$MTA_REPO_LIST_FILE" | while IFS="," read -r COL1 COL2 COL3 COL4 REPO BRANCH SUBDIR
 do
     # Download url
-    echo "Repo: '$REPO'" | tee -a "$MTA_RUN_LOG_FILE"
+    echo "Repo: '$REPO $SUBDIR'" | tee -a "$MTA_RUN_LOG_FILE"
 
     # Skip if repo is already in the .done file
-    grep -x "$REPO" "$MTA_REPO_DONE_FILE" >/dev/null && (echo "Skip $REPO" | tee -a "$MTA_RUN_LOG_FILE") && continue
+    grep -x "$REPO $SUBDIR" "$MTA_REPO_DONE_FILE" >/dev/null && (echo "Skip $REPO" | tee -a "$MTA_RUN_LOG_FILE") && continue
 
     # Trim
     REPO_NAME_RAW=$(basename "$REPO")
-    REPO_NAME=$(echo "$REPO_NAME_RAW" | cut -f 1 -d '.')
+    REPO_NAME=$(echo "${REPO_NAME_RAW%.*}" )
     echo "Generate report for $REPO -> $REPO_NAME"
 
-    REPO_BASE_DIR="$MTA_REPORTS_OUTPUT_DIR/$REPO_NAME" 
+    # REPO_BASE_DIR="$MTA_REPORTS_OUTPUT_DIR/$REPO_NAME-$SUBDIR" 
+    if [ ! -z "$SUBDIR" ]; then
+        SUBDIR_DASH=$(echo $SUBDIR | sed -e 's/\//-/g')
+        REPO_BASE_DIR="$MTA_REPORTS_OUTPUT_DIR/$REPO_NAME-$SUBDIR_DASH" 
+    else 
+        REPO_BASE_DIR="$MTA_REPORTS_OUTPUT_DIR/$REPO_NAME"
+    fi 
     REPO_REPORT_DIR="$REPO_BASE_DIR/report"
     REPO_WORK_DIR="$REPO_BASE_DIR/workdir"
     REPO_LOG_FILE="$REPO_WORK_DIR/mta-cli.log"
@@ -76,18 +82,18 @@ do
     fi
 
     #Parse points from index.html
-    POINTS=$(cat $REPO_REPORT_DIR/index.html | grep '<span class="points">' | sed 's/[^0-9]*//g')
-    NUM_TOTAL=$(cat $REPO_REPORT_DIR/index.html | grep '<td class="label_"> <span>Total</span> </td>' -B1 | sed 's/[^0-9]*//g')
-    NUM_OPTIONAL=$(cat $REPO_REPORT_DIR/index.html | grep '<td class="label_">Migration Optional</td>' -B1 | sed 's/[^0-9]*//g')
-    NUM_CLOUD_MANDATORY=$(cat $REPO_REPORT_DIR/index.html | grep '<td class="label_">Cloud Mandatory</td>' -B1 | sed 's/[^0-9]*//g')
-    NUM_CLOUD_OPTIONAL=$(cat $REPO_REPORT_DIR/index.html | grep '<td class="label_">Cloud Optional</td>' -B1 | sed 's/[^0-9]*//g')
-    NUM_INFORMATION=$(cat $REPO_REPORT_DIR/index.html | grep '<td class="label_">Information</td>' -B1 | sed 's/[^0-9]*//g')
+    POINTS=$(cat $REPO_REPORT_DIR/index.html | grep '<span class="legend">story points</span>' -B1 -m1 | sed 's/[^0-9]*//g')
+    NUM_TOTAL=$(cat $REPO_REPORT_DIR/index.html | grep '<td class="label_"> <span>Total</span> </td>' -B1 -m1| sed 's/[^0-9]*//g')
+    NUM_OPTIONAL=$(cat $REPO_REPORT_DIR/index.html | grep '<td class="label_">Migration Optional</td>' -B1 -m1| sed 's/[^0-9]*//g')
+    NUM_CLOUD_MANDATORY=$(cat $REPO_REPORT_DIR/index.html | grep '<td class="label_">Cloud Mandatory</td>' -B1 -m1| sed 's/[^0-9]*//g')
+    NUM_CLOUD_OPTIONAL=$(cat $REPO_REPORT_DIR/index.html | grep '<td class="label_">Cloud Optional</td>' -B1 -m1| sed 's/[^0-9]*//g')
+    NUM_INFORMATION=$(cat $REPO_REPORT_DIR/index.html | grep '<td class="label_">Information</td>' -B1 -m1| sed 's/[^0-9]*//g')
 
-    echo "$REPO,$REPO_NAME,$POINTS,$NUM_TOTAL,$NUM_OPTIONAL,$NUM_CLOUD_MANDATORY,$NUM_CLOUD_OPTIONAL,$NUM_INFORMATION" | tee -a "$MTA_POINTS_FILE"
+    echo "$REPO,$REPO_NAME,$SUBDIR,$POINTS,$NUM_TOTAL,$NUM_OPTIONAL,$NUM_CLOUD_MANDATORY,$NUM_CLOUD_OPTIONAL,$NUM_INFORMATION" | tee -a "$MTA_POINTS_FILE"
 
     # Mark as done
-    echo "$REPO" >>"$MTA_REPO_DONE_FILE"
-    echo "Done: '$REPO'" | tee -a "$MTA_RUN_LOG_FILE"
+    echo "$REPO $SUBDIR" >>"$MTA_REPO_DONE_FILE"
+    echo "Done: '$REPO $SUBDIR'" | tee -a "$MTA_RUN_LOG_FILE"
 
 
 done
