@@ -95,5 +95,7 @@ do
     echo "$REPO $SUBDIR" >>"$MTA_REPO_DONE_FILE"
     echo "Done: '$REPO $SUBDIR'" | tee -a "$MTA_RUN_LOG_FILE"
 
+    # Remove source code
+    cd $REPO_WORK_DIR && rm -rf $REPO_CLONED_DIR
 
 done
